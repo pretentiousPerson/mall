@@ -1,9 +1,8 @@
 package com.baijia.mall.service.impl;
 
-import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.baijia.mall.common.Const;
 import com.baijia.mall.common.ServerResponse;
@@ -13,217 +12,196 @@ import com.baijia.mall.pojo.User;
 import com.baijia.mall.service.IUserService;
 import com.baijia.mall.util.MD5Util;
 
+import java.util.UUID;
 
-@Service
+/**
+ * Created by geely
+ */
+@Service("iUserService")
 public class UserServiceImpl implements IUserService {
 
-	@Autowired
-	private UserMapper userMapper;
-	
-	/**
-	 * ÓÃ»§µÇÂ¼
-	 */
-	@Override
-	public ServerResponse<User> login(String username, String password) {
-		// TODO Auto-generated method stub
-		int resultCount = userMapper.checkUsername(username);
-		if(resultCount == 0) {
-			return ServerResponse.createByErrorMessage("ÓÃ»§Ãû²»´æÔÚ");
-		}
-		
-		String md5Password = MD5Util.MD5EncodeUtf8(password);
-		User user = userMapper.selectLogin(username,md5Password);
-		if(user == null) {
-			return ServerResponse.createByErrorMessage("ÃÜÂë´íÎó");
-		}
-		
-		user.setPassword(org.apache.commons.lang3.StringUtils.EMPTY);
-		return ServerResponse.createBySuccess("µÇÂ¼³É¹¦",user);
-	}
-	
-	/**
-	 * ×¢²á
-	 * @param user
-	 * @return
-	 */
-	public ServerResponse<String> register(User user) {
-        ServerResponse<String> validResponse = this.checkValid(user.getUsername(),
-                Const.USERNAME);
+    @Autowired
+    private UserMapper userMapper;
 
-        if (!validResponse.isSuccess()) {
-            return validResponse;
+
+    public ServerResponse<User> login(String username, String password) {
+        int resultCount = userMapper.checkUsername(username);
+        if(resultCount == 0 ){
+            return ServerResponse.createByErrorMessage("ç”¨æˆ·åä¸å­˜åœ¨");
         }
 
-        validResponse = this.checkValid(user.getEmail(), Const.EMAIL);
-
-        if (!validResponse.isSuccess()) {
-            return validResponse;
+        String md5Password = MD5Util.MD5EncodeUtf8(password);
+        User user  = userMapper.selectLogin(username,md5Password);
+        if(user == null){
+            return ServerResponse.createByErrorMessage("å¯†ç é”™è¯¯");
         }
 
+        user.setPassword(org.apache.commons.lang3.StringUtils.EMPTY);
+        return ServerResponse.createBySuccess("ç™»å½•æˆåŠŸ",user);
+    }
+
+
+
+    public ServerResponse<String> register(User user){
+        ServerResponse validResponse = this.checkValid(user.getUsername(),Const.USERNAME);
+        if(!validResponse.isSuccess()){
+            return validResponse;
+        }
+        validResponse = this.checkValid(user.getEmail(),Const.EMAIL);
+        if(!validResponse.isSuccess()){
+            return validResponse;
+        }
         user.setRole(Const.Role.ROLE_CUSTOMER);
-        //MD5¼ÓÃÜ
+        //MD5åŠ å¯†
         user.setPassword(MD5Util.MD5EncodeUtf8(user.getPassword()));
-
         int resultCount = userMapper.insert(user);
-
-        if (resultCount == 0) {
-            return ServerResponse.createByErrorMessage("×¢²áÊ§°Ü");
+        if(resultCount == 0){
+            return ServerResponse.createByErrorMessage("æ³¨å†Œå¤±è´¥");
         }
-
-        return ServerResponse.createBySuccessMessage("×¢²á³É¹¦");
+        return ServerResponse.createBySuccessMessage("æ³¨å†ŒæˆåŠŸ");
     }
-	
-	public ServerResponse<String> checkValid(String str, String type) {
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(type)) {
-            //¿ªÊ¼Ğ£Ñé
-            if (Const.USERNAME.equals(type)) {
+
+    public ServerResponse<String> checkValid(String str,String type){
+        if(org.apache.commons.lang3.StringUtils.isNotBlank(type)){
+            //å¼€å§‹æ ¡éªŒ
+            if(Const.USERNAME.equals(type)){
                 int resultCount = userMapper.checkUsername(str);
-
-                if (resultCount > 0) {
-                    return ServerResponse.createByErrorMessage("ÓÃ»§ÃûÒÑ´æÔÚ");
+                if(resultCount > 0 ){
+                    return ServerResponse.createByErrorMessage("ç”¨æˆ·åå·²å­˜åœ¨");
                 }
             }
-
-            if (Const.EMAIL.equals(type)) {
+            if(Const.EMAIL.equals(type)){
                 int resultCount = userMapper.checkEmail(str);
-
-                if (resultCount > 0) {
-                    return ServerResponse.createByErrorMessage("emailÒÑ´æÔÚ");
+                if(resultCount > 0 ){
+                    return ServerResponse.createByErrorMessage("emailå·²å­˜åœ¨");
                 }
             }
-        } else {
-            return ServerResponse.createByErrorMessage("²ÎÊı´íÎó");
+        }else{
+            return ServerResponse.createByErrorMessage("å‚æ•°é”™è¯¯");
+        }
+        return ServerResponse.createBySuccessMessage("æ ¡éªŒæˆåŠŸ");
+    }
+
+    public ServerResponse selectQuestion(String username){
+
+        ServerResponse validResponse = this.checkValid(username,Const.USERNAME);
+        if(validResponse.isSuccess()){
+            //ç”¨æˆ·ä¸å­˜åœ¨
+            return ServerResponse.createByErrorMessage("ç”¨æˆ·ä¸å­˜åœ¨");
+        }
+        String question = userMapper.selectQuestionByUsername(username);
+        if(org.apache.commons.lang3.StringUtils.isNotBlank(question)){
+            return ServerResponse.createBySuccess(question);
+        }
+        return ServerResponse.createByErrorMessage("æ‰¾å›å¯†ç çš„é—®é¢˜æ˜¯ç©ºçš„");
+    }
+
+    public ServerResponse<String> checkAnswer(String username,String question,String answer){
+        int resultCount = userMapper.checkAnswer(username,question,answer);
+        if(resultCount>0){
+            //è¯´æ˜é—®é¢˜åŠé—®é¢˜ç­”æ¡ˆæ˜¯è¿™ä¸ªç”¨æˆ·çš„,å¹¶ä¸”æ˜¯æ­£ç¡®çš„
+            String forgetToken = UUID.randomUUID().toString();
+            TokenCache.setKey(TokenCache.TOKEN_PREFIX+username,forgetToken);
+            return ServerResponse.createBySuccess(forgetToken);
+        }
+        return ServerResponse.createByErrorMessage("é—®é¢˜çš„ç­”æ¡ˆé”™è¯¯");
+    }
+
+
+
+    public ServerResponse<String> forgetResetPassword(String username,String passwordNew,String forgetToken){
+        if(org.apache.commons.lang3.StringUtils.isBlank(forgetToken)){
+            return ServerResponse.createByErrorMessage("å‚æ•°é”™è¯¯,tokenéœ€è¦ä¼ é€’");
+        }
+        ServerResponse validResponse = this.checkValid(username,Const.USERNAME);
+        if(validResponse.isSuccess()){
+            //ç”¨æˆ·ä¸å­˜åœ¨
+            return ServerResponse.createByErrorMessage("ç”¨æˆ·ä¸å­˜åœ¨");
+        }
+        String token = TokenCache.getKey(TokenCache.TOKEN_PREFIX+username);
+        if(org.apache.commons.lang3.StringUtils.isBlank(token)){
+            return ServerResponse.createByErrorMessage("tokenæ— æ•ˆæˆ–è€…è¿‡æœŸ");
         }
 
-        return ServerResponse.createBySuccessMessage("Ğ£Ñé³É¹¦");
+        if(org.apache.commons.lang3.StringUtils.equals(forgetToken,token)){
+            String md5Password  = MD5Util.MD5EncodeUtf8(passwordNew);
+            int rowCount = userMapper.updatePasswordByUsername(username,md5Password);
+
+            if(rowCount > 0){
+                return ServerResponse.createBySuccessMessage("ä¿®æ”¹å¯†ç æˆåŠŸ");
+            }
+        }else{
+            return ServerResponse.createByErrorMessage("tokené”™è¯¯,è¯·é‡æ–°è·å–é‡ç½®å¯†ç çš„token");
+        }
+        return ServerResponse.createByErrorMessage("ä¿®æ”¹å¯†ç å¤±è´¥");
     }
-	
-	 public ServerResponse<String> selectQuestion(String username) {
-	        ServerResponse<String> validResponse = this.checkValid(username, Const.USERNAME);
 
-	        if (validResponse.isSuccess()) {
-	            //ÓÃ»§²»´æÔÚ
-	            return ServerResponse.createByErrorMessage("ÓÃ»§²»´æÔÚ");
-	        }
 
-	        String question = userMapper.selectQuestionByUsername(username);
+    public ServerResponse<String> resetPassword(String passwordOld,String passwordNew,User user){
+        //é˜²æ­¢æ¨ªå‘è¶Šæƒ,è¦æ ¡éªŒä¸€ä¸‹è¿™ä¸ªç”¨æˆ·çš„æ—§å¯†ç ,ä¸€å®šè¦æŒ‡å®šæ˜¯è¿™ä¸ªç”¨æˆ·.å› ä¸ºæˆ‘ä»¬ä¼šæŸ¥è¯¢ä¸€ä¸ªcount(1),å¦‚æœä¸æŒ‡å®šid,é‚£ä¹ˆç»“æœå°±æ˜¯trueå•¦count>0;
+        int resultCount = userMapper.checkPassword(MD5Util.MD5EncodeUtf8(passwordOld),user.getId());
+        if(resultCount == 0){
+            return ServerResponse.createByErrorMessage("æ—§å¯†ç é”™è¯¯");
+        }
 
-	        if (org.apache.commons.lang3.StringUtils.isNotBlank(question)) {
-	            return ServerResponse.createBySuccess(question);
-	        }
+        user.setPassword(MD5Util.MD5EncodeUtf8(passwordNew));
+        int updateCount = userMapper.updateByPrimaryKeySelective(user);
+        if(updateCount > 0){
+            return ServerResponse.createBySuccessMessage("å¯†ç æ›´æ–°æˆåŠŸ");
+        }
+        return ServerResponse.createByErrorMessage("å¯†ç æ›´æ–°å¤±è´¥");
+    }
 
-	        return ServerResponse.createByErrorMessage("ÕÒ»ØÃÜÂëµÄÎÊÌâÊÇ¿ÕµÄ");
-	    }
-	 
-	 
-	 public ServerResponse<String> checkAnswer(String username, String question,
-		        String answer) {
-		        int resultCount = userMapper.checkAnswer(username, question, answer);
 
-		        if (resultCount > 0) {
-		            //ËµÃ÷ÎÊÌâ¼°ÎÊÌâ´ğ°¸ÊÇÕâ¸öÓÃ»§µÄ,²¢ÇÒÊÇÕıÈ·µÄ
-		            String forgetToken = UUID.randomUUID().toString();
-		            TokenCache.setKey(TokenCache.TOKEN_PREFIX + username, forgetToken);
+    public ServerResponse<User> updateInformation(User user){
+        //usernameæ˜¯ä¸èƒ½è¢«æ›´æ–°çš„
+        //emailä¹Ÿè¦è¿›è¡Œä¸€ä¸ªæ ¡éªŒ,æ ¡éªŒæ–°çš„emailæ˜¯ä¸æ˜¯å·²ç»å­˜åœ¨,å¹¶ä¸”å­˜åœ¨çš„emailå¦‚æœç›¸åŒçš„è¯,ä¸èƒ½æ˜¯æˆ‘ä»¬å½“å‰çš„è¿™ä¸ªç”¨æˆ·çš„.
+        int resultCount = userMapper.checkEmailByUserId(user.getEmail(),user.getId());
+        if(resultCount > 0){
+            return ServerResponse.createByErrorMessage("emailå·²å­˜åœ¨,è¯·æ›´æ¢emailå†å°è¯•æ›´æ–°");
+        }
+        User updateUser = new User();
+        updateUser.setId(user.getId());
+        updateUser.setEmail(user.getEmail());
+        updateUser.setPhone(user.getPhone());
+        updateUser.setQuestion(user.getQuestion());
+        updateUser.setAnswer(user.getAnswer());
 
-		            return ServerResponse.createBySuccess(forgetToken);
-		        }
+        int updateCount = userMapper.updateByPrimaryKeySelective(updateUser);
+        if(updateCount > 0){
+            return ServerResponse.createBySuccess("æ›´æ–°ä¸ªäººä¿¡æ¯æˆåŠŸ",updateUser);
+        }
+        return ServerResponse.createByErrorMessage("æ›´æ–°ä¸ªäººä¿¡æ¯å¤±è´¥");
+    }
 
-		        return ServerResponse.createByErrorMessage("ÎÊÌâµÄ´ğ°¸´íÎó");
-		    }
-	 
-	 public ServerResponse<String> forgetResetPassword(String username,
-		        String passwordNew, String forgetToken) {
-		        if (org.apache.commons.lang3.StringUtils.isBlank(forgetToken)) {
-		            return ServerResponse.createByErrorMessage("²ÎÊı´íÎó,tokenĞèÒª´«µİ");
-		        }
 
-		        ServerResponse validResponse = this.checkValid(username, Const.USERNAME);
 
-		        if (validResponse.isSuccess()) {
-		            //ÓÃ»§²»´æÔÚ
-		            return ServerResponse.createByErrorMessage("ÓÃ»§²»´æÔÚ");
-		        }
+    public ServerResponse<User> getInformation(Integer userId){
+        User user = userMapper.selectByPrimaryKey(userId);
+        if(user == null){
+            return ServerResponse.createByErrorMessage("æ‰¾ä¸åˆ°å½“å‰ç”¨æˆ·");
+        }
+        user.setPassword(org.apache.commons.lang3.StringUtils.EMPTY);
+        return ServerResponse.createBySuccess(user);
 
-		        String token = TokenCache.getKey(TokenCache.TOKEN_PREFIX + username);
+    }
 
-		        if (org.apache.commons.lang3.StringUtils.isBlank(token)) {
-		            return ServerResponse.createByErrorMessage("tokenÎŞĞ§»òÕß¹ıÆÚ");
-		        }
 
-		        if (org.apache.commons.lang3.StringUtils.equals(forgetToken, token)) {
-		            String md5Password = MD5Util.MD5EncodeUtf8(passwordNew);
-		            int rowCount = userMapper.updatePasswordByUsername(username,
-		                    md5Password);
 
-		            if (rowCount > 0) {
-		                return ServerResponse.createBySuccessMessage("ĞŞ¸ÄÃÜÂë³É¹¦");
-		            }
-		        } else {
-		            return ServerResponse.createByErrorMessage(
-		                "token´íÎó,ÇëÖØĞÂ»ñÈ¡ÖØÖÃÃÜÂëµÄtoken");
-		        }
 
-		        return ServerResponse.createByErrorMessage("ĞŞ¸ÄÃÜÂëÊ§°Ü");
-		    }
+    //backend
 
-		    public ServerResponse<String> resetPassword(String passwordOld,
-		        String passwordNew, User user) {
-		        //·ÀÖ¹ºáÏòÔ½È¨,ÒªĞ£ÑéÒ»ÏÂÕâ¸öÓÃ»§µÄ¾ÉÃÜÂë,Ò»¶¨ÒªÖ¸¶¨ÊÇÕâ¸öÓÃ»§.ÒòÎªÎÒÃÇ»á²éÑ¯Ò»¸öcount(1),Èç¹û²»Ö¸¶¨id,ÄÇÃ´½á¹û¾ÍÊÇtrueÀ²count>0;
-		        int resultCount = userMapper.checkPassword(MD5Util.MD5EncodeUtf8(
-		                    passwordOld), user.getId());
-
-		        if (resultCount == 0) {
-		            return ServerResponse.createByErrorMessage("¾ÉÃÜÂë´íÎó");
-		        }
-
-		        user.setPassword(MD5Util.MD5EncodeUtf8(passwordNew));
-
-		        int updateCount = userMapper.updateByPrimaryKeySelective(user);
-
-		        if (updateCount > 0) {
-		            return ServerResponse.createBySuccessMessage("ÃÜÂë¸üĞÂ³É¹¦");
-		        }
-
-		        return ServerResponse.createByErrorMessage("ÃÜÂë¸üĞÂÊ§°Ü");
-		    }
-		    
-		    public ServerResponse<User> updateInformation(User user) {
-		        //usernameÊÇ²»ÄÜ±»¸üĞÂµÄ
-		        //emailÒ²Òª½øĞĞÒ»¸öĞ£Ñé,Ğ£ÑéĞÂµÄemailÊÇ²»ÊÇÒÑ¾­´æÔÚ,²¢ÇÒ´æÔÚµÄemailÈç¹ûÏàÍ¬µÄ»°,²»ÄÜÊÇÎÒÃÇµ±Ç°µÄÕâ¸öÓÃ»§µÄ
-		        int resultCount = userMapper.checkEmailByUserId(user.getEmail(),
-		                user.getId());
-
-		        if (resultCount > 0) {
-		            return ServerResponse.createByErrorMessage("emailÒÑ´æÔÚ,Çë¸ü»»emailÔÙ³¢ÊÔ¸üĞÂ");
-		        }
-
-		        User updateUser = new User();
-		        updateUser.setId(user.getId());
-		        updateUser.setEmail(user.getEmail());
-		        updateUser.setPhone(user.getPhone());
-		        updateUser.setQuestion(user.getQuestion());
-		        updateUser.setAnswer(user.getAnswer());
-
-		        int updateCount = userMapper.updateByPrimaryKeySelective(updateUser);
-
-		        if (updateCount > 0) {
-		            return ServerResponse.createBySuccess("¸üĞÂ¸öÈËĞÅÏ¢³É¹¦", updateUser);
-		        }
-
-		        return ServerResponse.createByErrorMessage("¸üĞÂ¸öÈËĞÅÏ¢Ê§°Ü");
-		    }
-		    
-		    public ServerResponse<User> getInformation(Integer userId) {
-		        User user = userMapper.selectByPrimaryKey(userId);
-
-		        if (user == null) {
-		            return ServerResponse.createByErrorMessage("ÕÒ²»µ½µ±Ç°ÓÃ»§");
-		        }
-
-		        user.setPassword(org.apache.commons.lang3.StringUtils.EMPTY);
-
-		        return ServerResponse.createBySuccess(user);
-		    }
+    /**
+     * æ ¡éªŒæ˜¯å¦æ˜¯ç®¡ç†å‘˜
+     * @param user
+     * @return
+     */
+    public ServerResponse checkAdminRole(User user){
+        if(user != null && user.getRole().intValue() == Const.Role.ROLE_ADMIN){
+            return ServerResponse.createBySuccess();
+        }
+        return ServerResponse.createByError();
+    }
 
 
 
