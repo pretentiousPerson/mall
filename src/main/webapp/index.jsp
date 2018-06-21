@@ -21,8 +21,20 @@ springMVC上传文件
 	<input type="file" name="upload_file">
 	<input value = "富文本图片上传文件" type="submit">
 </form>
+<br><br><br><br>
+<form name="form3" action="manage/product/save.do" method = "post">
+	商品类别：<input type="text" value=0 name="categoryId"><br>
+	商品名称：<input type="text" value="朴宝英" name="name"><br>
+	商品副标题：<input type="text" value="自然生动的演技和可爱单纯的风格深受大众喜欢" name="subtitle"><br>
+	商品主图：<input type="text" value="http://www.837579301.cn/mall/product/4aada7d7-f55d-4a40-89da-4f85c608ca8e.jpg" name="mainImage"><br>
+	商品子图：<input type="text" value="http://www.837579301.cn/mall/product/f2a28bf8-175f-466b-a8fe-8caf9c3fa69e.jpg" name="subImages"><br>
+	商品详情：<input type="text" value="http://www.837579301.cn/mall/product/8269cb42-b8e6-41c3-a24a-6c150e697716.jpg" name="detail"><br>
+	商品价格：<input type="text" value="4589" name="price"><br>
+	商品库存：<input type="text" value="3" name="stock"><br>
+	上架状态：<input type="text" value=1 name="status"><br>
+	<input type="submit" value="提交">
+</form>
 
 
-<p><img alt=\"miaoshu.jpg\" src=\"http://img.happymmall.com/9c5c74e6-6615-4aa0-b1fc-c17a1eff6027.jpg\" width=\"790\" height=\"444\"><br></p><p><img alt=\"miaoshu2.jpg\" src=\"http://img.happymmall.com/31dc1a94-f354-48b8-a170-1a1a6de8751b.jpg\" width=\"790\" height=\"1441\"><img alt=\"miaoshu3.jpg\" src=\"http://img.happymmall.com/7862594b-3063-4b52-b7d4-cea980c604e0.jpg\" width=\"790\" height=\"1442\"><img alt=\"miaoshu4.jpg\" src=\"http://img.happymmall.com/9a650563-dc85-44d6-b174-d6960cfb1d6a.jpg\" width=\"790\" height=\"1441\"><br></p>
 </body>
 </html>
